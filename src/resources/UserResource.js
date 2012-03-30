@@ -7,11 +7,11 @@
 			{ name: "name", type: "str" },
 			{ name: "email", type: "str" }
 		],
-		init: function( data ) {
-			this._super( data );
+		init: function( model ) {
+			this._super( model );
 
 			this.url = ko.dependentObservable( function() {
-				var username = ko.utils.unwrapObservable( this.data.username ) || "";
+				var username = ko.utils.unwrapObservable( this.model.username ) || "";
 
 				if( username.length > 0 ) {
 					return "/api/users/" + username + "/";
@@ -21,4 +21,4 @@
 			}, this );
 		}
 	});
-})( window.jQuery, window.ko, window.KORE, window.App );
+})( window.jQuery, window.ko, window.KORE, window.DEMO.app );

@@ -1,24 +1,18 @@
-( function( $, ko, KORE, App )
-{
-	App.ViewModel.CurrentUserViewModel = pure.constructor.create( KORE.ViewModel.prototype,
-	{
-		init: function()
-		{
+( function( $, ko, KORE, App ) {
+	App.ViewModel.CurrentUserViewModel = KORE.ViewModel.extend({
+		init: function() {
 			KORE.ViewModel.prototype.init.call( this );
 
 			this.live = new App.Model.UserModel();
 			this.auth = new App.Model.AuthenticatedUserModel();
 			this.signup = new App.Model.UserModel();
 
-			this.tryLoading = function()
-			{
+			this.tryLoading = function() {
 				var self = this;
-				var username = ko.utils.unwrapObservable( this.live.data.username ) || "";
+				var username = ko.utils.unwrapObservable( this.live.model.username ) || "";
 
-				if( username.length > 0 )
-				{
-					this.live.fetch( function( data, textStatus )
-					{
+				if( username.length > 0 ) {
+					this.live.fetch( function( data, textStatus ) {
 						var isSuccessful = textStatus === "success";
 
 						self.isAuthenticated( isSuccessful );
@@ -27,28 +21,23 @@
 				}
 			}.bind( this );
 
-			this.saveProfile = function()
-			{
+			this.saveProfile = function() {
 				this.live.edit.commit();
 				this.live.save();
-				this.live.data.password( undefined );
+				this.live.model.password( undefined );
 			}.bind( this );
 
-			this.isSaveEnabled = ko.dependentObservable( function()
-			{
+			this.isSaveEnabled = ko.dependentObservable( function() {
 				if( ko.utils.unwrapObservable( this.live.flags.save ) === true ) return false;
-				if( ! this.live.isDataIdentical( this.live.data, this.live.edit ) ) return true;
-
+				if( ! this.live.isModelIdentical( this.live.model, this.live.edit ) ) return true;
 				return false;
 			}, this );
 
-			this.revertProfile = function()
-			{
+			this.revertProfile = function() {
 				this.live.edit.revert();
 			}.bind( this );
 
-			this.isRevertEnabled = ko.dependentObservable( function()
-			{
+			this.isRevertEnabled = ko.dependentObservable( function() {
 				return this.isSaveEnabled();
 			}, this );
 
@@ -65,20 +54,16 @@
 			this.isAuthenticated = ko.observable( false );
 			this.authMessage = ko.delayedRevertObservable( "", 2500 );
 
-			this.isAuthenticating = ko.dependentObservable( function()
-			{
+			this.isAuthenticating = ko.dependentObservable( function() {
 				return this.auth.flags.fetch() === true || this.live.flags.fetch() === true;
 			}, this );
 
-			this.tryAuthenticating = function( callback )
-			{
+			this.tryAuthenticating = function( callback ) {
 				var self = this;
 
-				this.auth.fetch( function( data, textStatus )
-				{
-					if( textStatus === "success" )
-					{
-						self.live.data.username( this.data.username() );
+				this.auth.fetch( function( data, textStatus ) {
+					if( textStatus === "success" ) {
+						self.live.model.username( this.model.username() );
 						self.tryLoading();
 					}
 
@@ -92,47 +77,39 @@
 
 			this.signupMessage = ko.delayedRevertObservable( "", 2500 );
 
-			this.isSigningUp = ko.dependentObservable( function()
-			{
+			this.isSigningUp = ko.dependentObservable( function() {
 				return this.live.flags.save() === true || this.live.flags.fetch() === true;
 			}, this );
 
-			this.trySignUp = function()
-			{
+			this.trySignUp = function() {
 				var self = this;
 
-				if( this.signup.data.username().length > 0 )
-				{
+				if( this.signup.model.username().length > 0 ) {
 					this.signupMessage( "" );
 
 					this.live.cloneFrom( this.signup );
 					this.signup.clear();
 
-					this.live.save( function( data, textStatus )
-					{
-						if( textStatus === "success" )
-						{
-							$.security.setBasicCredentials( this.data.username(), this.data.password() );
+					this.live.save( function( data, textStatus ) {
+						if( textStatus === "success" ) {
+							$.security.setBasicCredentials( this.model.username(), this.model.password() );
 
-							this.data.password( undefined );
+							this.model.password( undefined );
 							self.tryLoading();
 						}
 					});
-				}
-				else
-				{
+				} else {
 					this.signupMessage( "Please enter at least a username." );
 				}
 			}.bind( this );
 
-			this.isSignupEnabled = ko.dependentObservable( function()
-			{
+			this.isSignupEnabled = ko.dependentObservable( function() {
 				// All fields must be filled out
 
-				var username = this.signup.data.username() || "";
-				var password = this.signup.data.password() || "";
-				var email = this.signup.data.email() || "";
-				var name = this.signup.data.name() || "";
+				var username = this.signup.model.username() || "";
+				var password = this.signup.model.password() || "";
+				var email = this.signup.model.email() || "";
+				var name = this.signup.model.name() || "";
 
 				if( username.length === 0 ) return false;
 				if( password.length === 0 ) return false;
@@ -144,4 +121,4 @@
 		}
 	});
 
-})( window.jQuery, window.ko, window.KORE, window.App );
+})( window.jQuery, window.ko, window.KORE, window.DEMO.app );

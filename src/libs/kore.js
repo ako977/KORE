@@ -27,7 +27,7 @@
 		},
 
 		// Communicates with RESTful API
-		sync: function( method, data, callback ) {
+		sync: function( method, model, callback ) {
 			var context = this;
 
 			this.flags.sync( true );
@@ -41,7 +41,7 @@
 				"processData": false,
 				"crossDomain": false,
 				"context": context,
-				"data": data
+				"data": model
 			}).always( function( data, textStatus, jqXHR ) {
 				this.flags.sync( false );
 				if( typeof callback === "function" ) callback.apply( context, arguments );
@@ -50,7 +50,7 @@
 	});
 
 	KORE.Resource = KORE.Base.extend({
-		init: function( data ) {
+		init: function( modelData ) {
 			this._super();
 
 			// Sanity checks
@@ -58,7 +58,7 @@
 			if( this.flags.fetch !== undefined ) throw Error( "One of your Resources has setup this.flags.fetch -- it is a reserved property" );
 			if( this.flags.save !== undefined ) throw Error( "One of your Resources has setup this.flags.save -- it is a reserved property" );
 			if( this.flags.destroy !== undefined ) throw Error( "One of your Resources has setup this.flags.destroy -- it is a reserved property" );
-			if( this.data !== undefined ) throw Error( "One of your Resources has setup this.data -- it is a reserved property" );
+			if( this.model !== undefined ) throw Error( "One of your Resources has setup this.model -- it is a reserved property" );
 			if( this.edit !== undefined ) throw Error( "One of your Resources has setup this.edit -- it is a reserved property" );
 
 			// Setup standard flags to be leveraged by implementation
@@ -66,56 +66,56 @@
 			this.flags.save = ko.observable( false );
 			this.flags.destroy = ko.observable( false );
 
-			// this.data is a flat object that stores key-value pairs representing model data
-			this.data = {};
+			// this.model is a flat object that stores key-value pairs representing model data
+			this.model = {};
 
-			// this.edit is a mirror object to this.data and used as a temporary space for "edits"
-			// The edit.commit and edit.revert utility functions copy between this.data and this.edit
+			// this.edit is a mirror object to this.model and used as a temporary space for "edits"
+			// The edit.commit and edit.revert utility functions copy between this.model and this.edit
 			this.edit = {};
 
-			// Private method to subscribe edit fields to data fields
+			// Private method to subscribe edit fields to model fields
 			var subscribeTo = function( source, destination ) {
 				source.subscribe( function( value ) {
 					destination( value );
 				}, this );
 			}.bind( this );
 
-			// Setup data and edit observables
+			// Setup model and edit observables
 			for( var i = 0, len = this.properties.length; i < len; i++ ) {
 				var name = this.properties[ i ].name;
-				this.data[ name ] = ko.observable();
+				this.model[ name ] = ko.observable();
 				this.edit[ name ] = ko.observable();
-				subscribeTo( this.data[ name ], this.edit[ name ] );
+				subscribeTo( this.model[ name ], this.edit[ name ] );
 			}
 
-			// Copies data from "edit" store to "data" store
+			// Copies data from "edit" store to "model" store
 			this.edit.commit = function() {
-				this.copyData( this.edit, this.data );
+				this.copyModel( this.edit, this.model );
 			}.bind( this );
 
-			// Copies data from "data" store to "edit" store
+			// Copies data from "model" store to "edit" store
 			this.edit.revert = function() {
-				this.copyData( this.data, this.edit );
+				this.copyModel( this.model, this.edit );
 			}.bind( this );
 
 			// Performs a shallow copy of source model data to a destination model's data (same model types)
-			this.copyData = function( sourceData, destinationData ) {
+			this.copyModel = function( sourceModel, destinationModel ) {
 				for( var i = 0, len = this.properties.length; i < len; i++ ) {
 					var name = this.properties[ i ].name;
-					destinationData[ name ]( ko.utils.unwrapObservable( sourceData[ name ] ) );
+					destinationModel[ name ]( ko.utils.unwrapObservable( sourceModel[ name ] ) );
 				}
 			}.bind( this );
 
-			// Leverages copyData but accepts a same model as input
+			// Leverages copyModel but accepts a same model as input
 			this.cloneFrom = function( source ) {
-				this.copyData( source.data, this.data );
+				this.copyModel( source.model, this.model );
 			}.bind( this );
 
 			// Compares two same model data objects and returns true if identical
-			this.isDataIdentical = function( data1, data2 ) {
+			this.isModelIdentical = function( model1, model2 ) {
 				for( var i = 0, len = this.properties.length; i < len; i++ ) {
 					var name = this.properties[ i ].name;
-					if( ko.utils.unwrapObservable( data1[ name ] ) !== ko.utils.unwrapObservable( data2[ name ] ) ) {
+					if( ko.utils.unwrapObservable( model1[ name ] ) !== ko.utils.unwrapObservable( model2[ name ] ) ) {
 						return false;
 					}
 				}
@@ -126,7 +126,7 @@
 			this.getID = ko.dependentObservable( function() {
 				var idName = this.getIDName();
 				if( idName !== null ) {
-					var id = ko.utils.unwrapObservable( this.data[ idName ] );
+					var id = ko.utils.unwrapObservable( this.model[ idName ] );
 					if( parseInt( id ) > 0 ) {
 						return id;
 					}
@@ -151,7 +151,7 @@
 			// Returns an array of all property names for this model that don't have an "undefined" value
 			this.getInUsePropertyNames = function() {
 				var inUsePropertyNames = $.map( this.getPropertyNames(), function( field ) {
-					var isInvalid = ko.utils.unwrapObservable( this.data[ field ] ) === undefined;
+					var isInvalid = ko.utils.unwrapObservable( this.model[ field ] ) === undefined;
 					return isInvalid ? null : field;
 				}.bind( this ) );
 
@@ -189,7 +189,7 @@
 						// POST sends back the newly inserted ID, set it in the model
 						var idName = this.getIDName();
 						if( idName !== null && data.hasOwnProperty( idName ) ) {
-							this.data[ idName ]( data[ idName ] );
+							this.model[ idName ]( data[ idName ] );
 						}
 					}
 
@@ -223,29 +223,29 @@
 						"key": function( row ) {
 							return ko.utils.unwrapObservable( row[ idName ] );
 						}
-					}, this.data );
+					}, this.model );
 				}
 			}.bind( this );
 
 			// Sets all model property values to "undefined"
 			this.clear = function() {
-				for( var name in this.data ) {
-					if( ko.isWriteableObservable( this.data[ name ] ) ) {
-						this.data[ name ]( undefined );
+				for( var name in this.model ) {
+					if( ko.isWriteableObservable( this.model[ name ] ) ) {
+						this.model[ name ]( undefined );
 					}
 				}
 			}.bind( this );
 
 			// Model-specific extension of sync, which can gather data from the model
 			this.sync = function( method, callback ) {
-				var data = "";
+				var model = "";
 				if( method === "POST" || method === "PUT" ) {
-					if( this.data !== undefined ) {
-						data = ko.mapping.toJS( this.data, { include: this.getInUsePropertyNames() } );
-						data = $.param( this.typeCastOut( data ) );
+					if( this.model !== undefined ) {
+						model = ko.mapping.toJS( this.model, { include: this.getInUsePropertyNames() } );
+						model = $.param( this.typeCastOut( model ) );
 					}
 				}
-				return this._super( method, data, callback );
+				return this._super( method, model, callback );
 			}.bind( this );
 
 			// Transforms an unwrapped model's data values based on that property type for consumption in an API
@@ -289,7 +289,7 @@
 			}.bind( this );
 
 			// Load any local data provided during construction
-			this.load( data );
+			this.load( modelData );
 		},
 		getIDName: function() {
 			for( var i = 0, len = this.properties.length; i < len; i++ ) {
@@ -376,7 +376,7 @@
 
 			// Imports an array of data into the collection, leveraging ko.mapping for seamless merging
 			this.load = function( rows ) {
-				this.resources.importData( rows, this.resource(), this );
+				this.resources.importModel( rows, this.resource(), this );
 			}.bind( this );
 
 			// Collection-specific extension of sync
@@ -438,7 +438,7 @@
 	// These import functions ensure proper instance creation when mapping
 	// (TODO: elaborate comment)
 
-	ko.observable.fn.importData = function( row ) {
+	ko.observable.fn.importModel = function( row ) {
 		ko.utils.modelImport.call( this, row );
 	};
 
@@ -446,7 +446,7 @@
 		ko.mapping.fromJS( row, {}, this );
 	};
 
-	ko.observableArray.fn.importData = function( rows, childConstructor, parent ) {
+	ko.observableArray.fn.importModel = function( rows, childConstructor, parent ) {
 		ko.utils.modelArrayImport.call( this, rows, childConstructor, parent );
 	};
 

@@ -1,21 +1,21 @@
 ( function( $, ko, KORE, App ) {
 	App.Collection.UserBookmarkCollection = App.Collection.AbstractBookmarkCollection.extend({
-		init: function( models, parent ) {
-			this._super( models );
+		init: function( resources, parent ) {
+			this._super( resources );
 
 			this.parent = ko.observable( parent );
 			this.url = ko.dependentObservable( function() {
 				return this.parent().url() + "bookmarks/";
 			}, this );
 
-			this.bookmarkEntry = this.getModelInstance();
+			this.bookmarkEntry = this.getResourceInstance();
 
 			this.addBookmark = function() {
-				var newModelInstance = this.getModelInstance();
-				newModelInstance.cloneFrom( this.bookmarkEntry );
-				newModelInstance.save();
+				var newResourceInstance = this.getResourceInstance();
+				newResourceInstance.cloneFrom( this.bookmarkEntry );
+				newResourceInstance.save();
 				this.bookmarkEntry.clear();
-				this.models.unshift( newModelInstance );
+				this.resources.unshift( newResourceInstance );
 			}.bind( this );
 
 			this.afterAdd = function( element ) {
@@ -29,4 +29,4 @@
 			}
 		}
 	});
-})( window.jQuery, window.ko, window.KORE, window.App );
+})( window.jQuery, window.ko, window.KORE, window.DEMO.app );

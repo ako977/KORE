@@ -30,4 +30,4 @@
 			this.currentUser = new App.ViewModel.CurrentUserViewModel();
 		}
 	});
-})( window.jQuery, window.ko, window.KORE, window.App );
+})( window.jQuery, window.ko, window.KORE, window.DEMO.app );

@@ -6,4 +6,6 @@ What is KORE?
 
 KORE is a library inspired by Backbone.js that bridges the gap between a Knockout application and a RESTful back-end.
 
-It's in a very early stage, but is currently usable.  It still has a long way to go.
+It's currently in a broken state as an example application is built to show how it works.
+
+Stay tuned!

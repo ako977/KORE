@@ -8,14 +8,14 @@
 			{ name: "url", type: "str" },
 			{ name: "tags", type: "str" }
 		],
-		init: function( data, parent ) {
-			this._super( data );
+		init: function( model, parent ) {
+			this._super( model );
 
 			this.parent = ko.observable( parent );
 
 			this.url = ko.dependentObservable( function() {
 				var idName = this.getIDName();
-				var id = ko.utils.unwrapObservable( this.data[ idName ] ) || 0;
+				var id = ko.utils.unwrapObservable( this.model[ idName ] ) || 0;
 
 				if( id > 0 ) {
 					return this.parent().url() + id + "/";
@@ -30,7 +30,7 @@
 
 			this.isDeleteEnabled = ko.dependentObservable( function() {
 				var idName = this.getIDName();
-				var id = ko.utils.unwrapObservable( this.data[ idName ] ) || 0;
+				var id = ko.utils.unwrapObservable( this.model[ idName ] ) || 0;
 				return id > 0;
 			}, this );
 
@@ -43,10 +43,9 @@
 				if( ko.utils.unwrapObservable( this.flags.save ) === true ) {
 					return false;
 				}
-				if( ! this.isDataIdentical( this.data, this.edit ) ) {
+				if( ! this.isModelIdentical( this.model, this.edit ) ) {
 					return true;
 				}
-
 				return false;
 			}, this );
 
@@ -59,4 +58,4 @@
 			}, this );
 		}
 	});
-})( window.jQuery, window.ko, window.KORE, window.App );
+})( window.jQuery, window.ko, window.KORE, window.DEMO.app );
