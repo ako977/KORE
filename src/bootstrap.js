@@ -1,4 +1,4 @@
-window.DEMO = window.DEMO || ( window.DEMO = { viewModel: {}, app: {} );
+window.DEMO = window.DEMO || ( window.DEMO = { viewModel: {}, app: {} } );
 
 ( function( $, ko, viewModel, App ) {
 	App.Collection = {};
